@@ -17,7 +17,6 @@ export default async function handler(req, res) {
   try {
     const { message, username, jobid, placeid, gamename, playercount } = req.query;
 
-    // Use DISCORD_WEBHOOK_URL from environment variables
     const DISCORD_WEBHOOK = "https://discord.com/api/webhooks/1420743327560630384/T_8tYm7D9X2Km8so2mySjyipIUhwNQ1MgZl8wiPzi0oYXoquaQZpfxtmHxIPycQGBhlz";
 
     if (!DISCORD_WEBHOOK) {
@@ -27,50 +26,38 @@ export default async function handler(req, res) {
       });
     }
 
-    // Create embed based on available data
+    // Create multiple join links
+    const robloxProtocolLink = `roblox://placeId=${placeid}&gameInstanceId=${jobid}`;
+    const webLink = `https://roblox.com/games/start?placeId=${placeid}&gameInstanceId=${jobid}`;
+    const mobileLink = `https://www.roblox.com/games/start?placeId=${placeid}&gameInstanceId=${jobid}`;
+
     const embed = {
-      title: 'Roblox Server Information',
-      color: 5814783,
+      title: gamename || 'Roblox Server',
+      color: 3447003, // Blue color
       timestamp: new Date().toISOString(),
-      fields: []
+      fields: [
+        {
+          name: '🔗 Join Links',
+          value: `**[Desktop App](${robloxProtocolLink})** • **[Web Browser](${webLink})** • **[Mobile](${mobileLink})**`,
+          inline: false
+        },
+        {
+          name: '🆔 Server ID',
+          value: `\`${jobid}\``,
+          inline: true
+        },
+        {
+          name: '🎮 Place ID',
+          value: `\`${placeid}\``,
+          inline: true
+        }
+      ],
+      footer: {
+        text: 'Click the links above to join the server'
+      }
     };
 
-    // Add JobId if provided
-    if (jobid) {
-      embed.fields.push({
-        name: '🔗 Job ID',
-        value: `\`${jobid}\``,
-        inline: true
-      });
-      
-      // Add server link
-      embed.fields.push({
-        name: '🌐 Server Link',
-        value: `[Join Server](https://roblox.com/games/start?placeId=${placeid || '0'}&gameInstanceId=${jobid})`,
-        value: `roblox://placeId=${placeid || '0'}&gameInstanceId=${jobid}`,
-        inline: true
-      });
-    }
-
-    // Add Place ID if provided
-    if (placeid) {
-      embed.fields.push({
-        name: '🎮 Place ID',
-        value: `\`${placeid}\``,
-        inline: true
-      });
-    }
-
-    // Add Game Name if provided
-    if (gamename) {
-      embed.fields.push({
-        name: '🎯 Game',
-        value: gamename,
-        inline: true
-      });
-    }
-
-    // Add Player Count if provided
+    // Add player count if available
     if (playercount) {
       embed.fields.push({
         name: '👥 Players',
@@ -80,17 +67,18 @@ export default async function handler(req, res) {
     }
 
     // Add custom message if provided
-    if (message) {
+    if (message && message !== "Server%20info%20from%20Delta") {
       embed.fields.push({
-        name: '💬 Message',
+        name: '💬 Note',
         value: message,
         inline: false
       });
     }
 
     const webhookData = {
-      username: username || 'Delta Server Tracker',
-      embeds: [embed]
+      username: username || 'Server Join Links',
+      embeds: [embed],
+      content: `**Click the links below to join the server!** 🎮`
     };
 
     // Send to Discord
@@ -105,9 +93,13 @@ export default async function handler(req, res) {
     if (discordResponse.status === 204) {
       return res.status(200).json({
         success: true,
-        message: 'Server info sent to Discord!',
-        jobid: jobid || 'None',
-        timestamp: new Date().toISOString()
+        message: 'Join links sent to Discord!',
+        jobid: jobid,
+        links: {
+          desktop: robloxProtocolLink,
+          web: webLink,
+          mobile: mobileLink
+        }
       });
     } else {
       const errorText = await discordResponse.text();
