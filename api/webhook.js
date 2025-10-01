@@ -6,46 +6,92 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  // Handle preflight request
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
-  // Only allow GET requests
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Only GET requests allowed' });
   }
 
   try {
-    const { message, username } = req.query;
+    const { message, username, jobid, placeid, gamename, playercount } = req.query;
 
-    if (!message) {
-      return res.status(400).json({ 
+    // Use DISCORD_WEBHOOK_URL from environment variables
+    const DISCORD_WEBHOOK = "https://discord.com/api/webhooks/1420743327560630384/T_8tYm7D9X2Km8so2mySjyipIUhwNQ1MgZl8wiPzi0oYXoquaQZpfxtmHxIPycQGBhlz";
+
+    if (!DISCORD_WEBHOOK) {
+      return res.status(500).json({ 
         success: false, 
-        error: 'Message parameter is required' 
+        error: 'Discord webhook not configured' 
       });
     }
 
-    // ⚠️ REPLACE THIS WITH YOUR ACTUAL DISCORD WEBHOOK URL
-    const DISCORD_WEBHOOK = process.env.DISCORD_WEBHOOK_URL || 'https://discord.com/api/webhooks/1420743327560630384/T_8tYm7D9X2Km8so2mySjyipIUhwNQ1MgZl8wiPzi0oYXoquaQZpfxtmHxIPycQGBhlz';
-
-    const webhookData = {
-      content: message,
-      username: username || 'Delta User',
-      embeds: [
-        {
-          title: 'Message from Delta',
-          description: message,
-          color: 5814783,
-          timestamp: new Date().toISOString(),
-          footer: {
-            text: 'Via Vercel Proxy'
-          }
-        }
-      ]
+    // Create embed based on available data
+    const embed = {
+      title: 'Roblox Server Information',
+      color: 5814783,
+      timestamp: new Date().toISOString(),
+      fields: []
     };
 
-    console.log('Sending to Discord:', webhookData);
+    // Add JobId if provided
+    if (jobid) {
+      embed.fields.push({
+        name: '🔗 Job ID',
+        value: `\`${jobid}\``,
+        inline: true
+      });
+      
+      // Add server link
+      embed.fields.push({
+        name: '🌐 Server Link',
+        value: `[Join Server](https://roblox.com/games/start?placeId=${placeid || '0'}&gameInstanceId=${jobid})`,
+        value: `roblox://placeId=${placeid || '0'}&gameInstanceId=${jobid}`,
+        inline: true
+      });
+    }
+
+    // Add Place ID if provided
+    if (placeid) {
+      embed.fields.push({
+        name: '🎮 Place ID',
+        value: `\`${placeid}\``,
+        inline: true
+      });
+    }
+
+    // Add Game Name if provided
+    if (gamename) {
+      embed.fields.push({
+        name: '🎯 Game',
+        value: gamename,
+        inline: true
+      });
+    }
+
+    // Add Player Count if provided
+    if (playercount) {
+      embed.fields.push({
+        name: '👥 Players',
+        value: playercount,
+        inline: true
+      });
+    }
+
+    // Add custom message if provided
+    if (message) {
+      embed.fields.push({
+        name: '💬 Message',
+        value: message,
+        inline: false
+      });
+    }
+
+    const webhookData = {
+      username: username || 'Delta Server Tracker',
+      embeds: [embed]
+    };
 
     // Send to Discord
     const discordResponse = await fetch(DISCORD_WEBHOOK, {
@@ -59,7 +105,8 @@ export default async function handler(req, res) {
     if (discordResponse.status === 204) {
       return res.status(200).json({
         success: true,
-        message: 'Webhook delivered to Discord!',
+        message: 'Server info sent to Discord!',
+        jobid: jobid || 'None',
         timestamp: new Date().toISOString()
       });
     } else {
