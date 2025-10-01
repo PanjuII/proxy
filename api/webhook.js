@@ -33,7 +33,7 @@ export default async function handler(req, res) {
       }
       
       finalCustomLink = decodedLink;
-      joinLinks = `**[🔗 Exact Private Server Link](${decodedLink})**\n*This is the exact link you provided*`;
+      joinLinks = `**[🔗 Exact Private Server Link](${decodedLink}&type=Server)**\n*This is the exact link you provided*`;
       
       console.log("Custom link preserved:", decodedLink);
     } else {
@@ -153,3 +153,4 @@ export default async function handler(req, res) {
     });
   }
 }
+
