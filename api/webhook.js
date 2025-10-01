@@ -27,7 +27,7 @@ export default async function handler(req, res) {
     }
 
     // Create multiple join links
-    const robloxProtocolLink = `roblox://placeId=${placeid}&gameInstanceId=${jobid}`;
+    const robloxProtocolLink = `https://fern.wtf/joiner?placeId=${placeid}&gameInstanceId=${jobid}`;
     const webLink = `https://roblox.com/games/start?placeId=${placeid}&gameInstanceId=${jobid}`;
     const mobileLink = `https://www.roblox.com/games/start?placeId=${placeid}&gameInstanceId=${jobid}`;
 
@@ -118,3 +118,4 @@ export default async function handler(req, res) {
     });
   }
 }
+
