@@ -19,16 +19,16 @@ export default async function handler(req, res) {
 
     const DISCORD_WEBHOOK = "https://discord.com/api/webhooks/1420743327560630384/T_8tYm7D9X2Km8so2mySjyipIUhwNQ1MgZl8wiPzi0oYXoquaQZpfxtmHxIPycQGBhlz";
 
-    // Use custom link if provided, otherwise generate default links
+    // Decode the custom link exactly as sent
     let joinLinks = "";
     if (customlink && customlink !== "None") {
       const decodedLink = decodeURIComponent(customlink);
-      joinLinks = `**[Custom Server Link](${decodedLink})**`;
+      joinLinks = `**[🔗 Exact Server Link](${decodedLink})**\n*This is the exact link you provided*`;
     } else {
+      // Only generate auto-links if no custom link provided
       const robloxProtocolLink = `roblox://placeId=${placeid}&gameInstanceId=${jobid}`;
-      const webLink = `https://roblox.com/games/start?placeId=${placeid}&gameInstanceId=${jobid}`;
-      const mobileLink = `https://www.roblox.com/games/start?placeId=${placeid}&gameInstanceId=${jobid}`;
-      joinLinks = `**[Desktop App](${robloxProtocolLink})** • **[Web Browser](${webLink})** • **[Mobile](${mobileLink})**`;
+      const webLink = `https://www.roblox.com/games/start?placeId=${placeid}&gameInstanceId=${jobid}`;
+      joinLinks = `**[Desktop App](${robloxProtocolLink})** • **[Web Browser](${webLink})**`;
     }
 
     const embed = {
@@ -53,7 +53,7 @@ export default async function handler(req, res) {
         }
       ],
       footer: {
-        text: customlink ? 'Using custom server link' : 'Using auto-generated links'
+        text: customlink ? 'Using your exact custom server link' : 'Using auto-generated links'
       }
     };
 
@@ -88,7 +88,9 @@ export default async function handler(req, res) {
     const webhookData = {
       username: username || 'Private Server Scanner',
       embeds: [embed],
-      content: `**🛡️ Private Server Detected!**\n${customlink ? 'Using custom server link provided' : 'Join using the links below!'}`
+      content: customlink ? 
+        `**🛡️ Private Server Scan Complete!**\nYour exact server link is preserved below:` :
+        `**🛡️ Private Server Detected!**\nJoin using the links below:`
     };
 
     // Send to Discord
@@ -106,6 +108,7 @@ export default async function handler(req, res) {
         message: 'Private server info sent to Discord!',
         server_type: 'private',
         used_custom_link: !!customlink && customlink !== "None",
+        custom_link_preserved: customlink && customlink !== "None",
         jobid: jobid
       });
     } else {
