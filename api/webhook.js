@@ -38,7 +38,7 @@ export default async function handler(req, res) {
       fields: [
         {
           name: '🔗 Join Links',
-          value: `**[Desktop App](${robloxProtocolLink})** • **[Web Browser](${webLink})** • **[Mobile](${mobileLink})**`,
+          value: `**[Fern Joiner](${robloxProtocolLink})**\n**[Mobile](${mobileLink})**`,
           inline: false
         },
         {
@@ -118,4 +118,5 @@ export default async function handler(req, res) {
     });
   }
 }
+
 
