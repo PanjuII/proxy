@@ -1,0 +1,8 @@
+{
+  "name": "delta-webhook-proxy",
+  "version": "1.0.0",
+  "description": "Webhook proxy for Delta Executor",
+  "dependencies": {
+    "node-fetch": "^2.6.7"
+  }
+}
