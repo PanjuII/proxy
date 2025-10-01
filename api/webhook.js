@@ -15,15 +15,27 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { message, username, jobid, placeid, gamename, playercount, animals, customlink } = req.query;
+    const { message, username, jobid, placeid, gamename, playercount, animals, customlink, encoding } = req.query;
 
     const DISCORD_WEBHOOK = "https://discord.com/api/webhooks/1420743327560630384/T_8tYm7D9X2Km8so2mySjyipIUhwNQ1MgZl8wiPzi0oYXoquaQZpfxtmHxIPycQGBhlz";
 
-    // Decode the custom link exactly as sent
+    // Decode the custom link with special handling for Roblox domain preservation
     let joinLinks = "";
+    let finalCustomLink = "";
+    
     if (customlink && customlink !== "None") {
-      const decodedLink = decodeURIComponent(customlink);
-      joinLinks = `**[🔗 Exact Server Link](${decodedLink})**\n*This is the exact link you provided*`;
+      let decodedLink = decodeURIComponent(customlink);
+      
+      // If special encoding was used (to bypass Roblox's roproxy conversion)
+      if (encoding === "special") {
+        decodedLink = decodedLink.replace(/ROBLOX_DOT_COM/g, "roblox.com");
+        decodedLink = decodedLink.replace(/WWW_DOT_/g, "www.");
+      }
+      
+      finalCustomLink = decodedLink;
+      joinLinks = `**[🔗 Exact Private Server Link](${decodedLink})**\n*This is the exact link you provided*`;
+      
+      console.log("Custom link preserved:", decodedLink);
     } else {
       // Only generate auto-links if no custom link provided
       const robloxProtocolLink = `roblox://placeId=${placeid}&gameInstanceId=${jobid}`;
@@ -32,7 +44,7 @@ export default async function handler(req, res) {
     }
 
     const embed = {
-      title: gamename || 'Roblox Private Server',
+      title: gamename ? `${gamename} - Private Server` : 'Roblox Private Server',
       color: 10181046, // Purple color for private servers
       timestamp: new Date().toISOString(),
       fields: [
@@ -48,14 +60,23 @@ export default async function handler(req, res) {
         },
         {
           name: '🆔 Server ID',
-          value: `\`${jobid}\``,
+          value: `\`${jobid || 'Not Available'}\``,
           inline: true
         }
       ],
       footer: {
-        text: customlink ? 'Using your exact custom server link' : 'Using auto-generated links'
+        text: customlink && customlink !== "None" ? 'Your exact custom server link was preserved' : 'Using auto-generated links'
       }
     };
+
+    // Add place ID if available
+    if (placeid) {
+      embed.fields.push({
+        name: '🎮 Place ID',
+        value: `\`${placeid}\``,
+        inline: true
+      });
+    }
 
     // Add player count if available
     if (playercount) {
@@ -67,7 +88,7 @@ export default async function handler(req, res) {
     }
 
     // Add animals data if available
-    if (animals && animals !== "No%20animals%20found") {
+    if (animals && animals !== "No%20animals%20found" && animals !== "None") {
       const decodedAnimals = decodeURIComponent(animals);
       embed.fields.push({
         name: '🐾 Animals Found',
@@ -78,9 +99,10 @@ export default async function handler(req, res) {
 
     // Add custom message if provided
     if (message && message !== "Server%20info%20from%20Delta") {
+      const decodedMessage = decodeURIComponent(message);
       embed.fields.push({
         name: '💬 Note',
-        value: message,
+        value: decodedMessage,
         inline: false
       });
     }
@@ -88,8 +110,8 @@ export default async function handler(req, res) {
     const webhookData = {
       username: username || 'Private Server Scanner',
       embeds: [embed],
-      content: customlink ? 
-        `**🛡️ Private Server Scan Complete!**\nYour exact server link is preserved below:` :
+      content: customlink && customlink !== "None" ? 
+        `**🛡️ Private Server Scan Complete!**\nYour exact server link has been preserved below:` :
         `**🛡️ Private Server Detected!**\nJoin using the links below:`
     };
 
@@ -109,19 +131,22 @@ export default async function handler(req, res) {
         server_type: 'private',
         used_custom_link: !!customlink && customlink !== "None",
         custom_link_preserved: customlink && customlink !== "None",
-        jobid: jobid
+        original_custom_link: finalCustomLink,
+        jobid: jobid,
+        timestamp: new Date().toISOString()
       });
     } else {
       const errorText = await discordResponse.text();
+      console.error('Discord API error:', discordResponse.status, errorText);
       return res.status(500).json({
         success: false,
-        error: `Discord error: ${discordResponse.status}`,
+        error: `Discord API error: ${discordResponse.status}`,
         details: errorText
       });
     }
 
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Server error:', error);
     return res.status(500).json({
       success: false,
       error: 'Server error: ' + error.message
