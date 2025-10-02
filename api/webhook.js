@@ -59,17 +59,14 @@ export default async function handler(req, res) {
           value: '**Private Server** ✅',
           inline: true
         }
-      ],
-      footer: {
-        text: customlink && customlink !== "None" ? 'Your exact custom server link was preserved' : 'Using auto-generated links'
-      }
+      ]
     };
 
     // Add income data if available
     if (totalincome && animalcount) {
       embed.fields.push({
         name: '💰 Total Income',
-        value: `**$${totalincome}/s** from ${animalcount} animals`,
+        value: `**$${totalincome}/s**`,
         inline: true
       });
     }
@@ -169,5 +166,6 @@ export default async function handler(req, res) {
     });
   }
 }
+
 
 
