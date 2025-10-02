@@ -121,7 +121,7 @@ export default async function handler(req, res) {
     }
 
     const webhookData = {
-      username: username || 'Private Server Scanner',
+      username: username || 'THE FORG',
       embeds: [embed],
       content: content
     };
@@ -166,6 +166,7 @@ export default async function handler(req, res) {
     });
   }
 }
+
 
 
 
