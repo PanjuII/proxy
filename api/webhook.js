@@ -58,11 +58,6 @@ export default async function handler(req, res) {
           name: '🛡️ Server Type',
           value: '**Private Server** ✅',
           inline: true
-        },
-        {
-          name: '🆔 Server ID',
-          value: `\`${jobid || 'Not Available'}\``,
-          inline: true
         }
       ],
       footer: {
@@ -78,16 +73,6 @@ export default async function handler(req, res) {
         inline: true
       });
     }
-
-    // Add place ID if available
-    if (placeid) {
-      embed.fields.push({
-        name: '🎮 Place ID',
-        value: `\`${placeid}\``,
-        inline: true
-      });
-    }
-
     // Add player count if available
     if (playercount) {
       embed.fields.push({
@@ -184,4 +169,5 @@ export default async function handler(req, res) {
     });
   }
 }
+
 
