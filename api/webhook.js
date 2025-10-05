@@ -15,10 +15,37 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { message, username, jobid, placeid, gamename, playercount, animals, customlink, encoding, totalincome, animalcount, discord_webhook } = req.query;
+    const { 
+      message, 
+      username, 
+      jobid, 
+      placeid, 
+      gamename, 
+      playercount, 
+      animals, 
+      customlink, 
+      encoding, 
+      totalincome, 
+      animalcount, 
+      discord_webhook 
+    } = req.query;
 
-    if (!discord_webhook) {
-      return res.status(400).json({ error: 'No discord_webhook provided' });
+    // Get Discord webhook from query parameter (sent from Lua)
+    const DISCORD_WEBHOOK = discord_webhook;
+
+    if (!DISCORD_WEBHOOK) {
+      return res.status(400).json({ 
+        success: false,
+        error: 'No Discord webhook provided' 
+      });
+    }
+
+    // Validate Discord webhook format
+    if (!DISCORD_WEBHOOK.includes('discord.com/api/webhooks/')) {
+      return res.status(400).json({ 
+        success: false,
+        error: 'Invalid Discord webhook format' 
+      });
     }
 
     // Decode the custom link with special handling for Roblox domain preservation
@@ -45,6 +72,19 @@ export default async function handler(req, res) {
       joinLinks = `**[Desktop App](${robloxProtocolLink})** • **[Web Browser](${webLink})**`;
     }
 
+    // Format total income for display
+    let formattedTotalIncome = "";
+    if (totalincome) {
+      const incomeNum = parseInt(totalincome);
+      if (incomeNum >= 1000000) {
+        formattedTotalIncome = `$${(incomeNum / 1000000).toFixed(1)}M/s`;
+      } else if (incomeNum >= 1000) {
+        formattedTotalIncome = `$${(incomeNum / 1000).toFixed(1)}K/s`;
+      } else {
+        formattedTotalIncome = `$${incomeNum}/s`;
+      }
+    }
+
     // Create embed with income data
     const embed = {
       title: gamename ? `${gamename} - Private Server` : 'Roblox Private Server',
@@ -68,10 +108,11 @@ export default async function handler(req, res) {
     if (totalincome && animalcount) {
       embed.fields.push({
         name: '💰 Total Income',
-        value: `**$${totalincome}/s**`,
+        value: `**${formattedTotalIncome}**`,
         inline: true
       });
     }
+
     // Add player count if available
     if (playercount) {
       embed.fields.push({
@@ -119,7 +160,7 @@ export default async function handler(req, res) {
 
     // Add income to content if available
     if (totalincome) {
-      content += `\n💰 **Total Brainrot Value:** **__$${totalincome}/s__**`;
+      content += `\n💰 **Total Brainrot Value:** **__${formattedTotalIncome}__**`;
     }
 
     const webhookData = {
@@ -128,8 +169,11 @@ export default async function handler(req, res) {
       content: content
     };
 
+    console.log('Sending to Discord webhook:', DISCORD_WEBHOOK);
+    console.log('Webhook data:', JSON.stringify(webhookData, null, 2));
+
     // Send to Discord
-    const discordResponse = await fetch(discord_webhook, {
+    const discordResponse = await fetch(DISCORD_WEBHOOK, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -146,6 +190,7 @@ export default async function handler(req, res) {
         custom_link_preserved: customlink && customlink !== "None",
         original_custom_link: finalCustomLink,
         total_income: totalincome || null,
+        formatted_income: formattedTotalIncome || null,
         animal_count: animalcount || null,
         jobid: jobid,
         timestamp: new Date().toISOString()
